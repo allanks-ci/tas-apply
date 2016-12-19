@@ -1,0 +1,33 @@
+build:
+  image: golang
+  commands:
+    - go get
+    - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+  when:
+    event: push
+
+publish:
+  docker:
+    username: allanks
+    password: $$DOCKER_PASSWORD
+    email: $$EMAIL
+    repo: allanks/tas-apply
+    when:
+      branch: master
+      event: push
+
+  ssh:
+    host: $$HOST
+    user: root
+    commands:
+      - docker login -u allanks -p $$DOCKER_PASSWORD
+      - docker pull allanks/tas-apply
+      - echo "Stopping tas-apply"
+      - docker stop tas-apply
+      - echo "Removing tas-apply"
+      - docker rm tas-apply
+      - echo "Starting tas-apply"
+      - docker run -d -e "IO_TAZZY_SECRET=$$TAZZY_SECRET" -e "APP_SHORTCODE=quickapply" -v /db/bolt/tas-apply:/db --name tas-apply -p 8085:8080 allanks/tas-apply
+    when:
+      branch: master
+      event: push

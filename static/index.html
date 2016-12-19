@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html> 
+  <head>
+    <link rel="stylesheet" href="/css/default.css" />
+  </head>
+
+  <body>
+    <h1>Apply Here</h1> 
+    <ul>
+      <li>
+          <label for="email-1">E-mail</label>
+          <input id="email-1" name="email-1" type="email" value={{.}} />
+      </li>
+      <li class="">
+          <label for="first-name-1">First name</label>
+          <input id="first-name-1" name="first-name-1" type="text" />
+      </li>
+      <li class="">
+          <label for="last-name-1">Last name</label>
+          <input id="last-name-1" name="last-name-1" type="text" />
+      </li>
+      <form action="/submit" method="get">
+        <input type="submit" value="Apply"/>
+      </form>
+    </ul>
+  </body>
+</html>
