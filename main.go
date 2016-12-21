@@ -73,7 +73,7 @@ func getEmail(tenant, saml string) string {
 }
 
 func getApplyUrl(rw http.ResponseWriter, req *http.Request) {
-	rw.Write(fmt.Sprintf("http://%v.quickapply.communitytazzy.com"))
+	rw.Write([]byte(fmt.Sprintf("http://%v.quickapply.communitytazzy.com")))
 }
 
 func main() {
