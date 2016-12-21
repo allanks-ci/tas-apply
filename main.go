@@ -31,7 +31,7 @@ func basePage(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	email := getEmail(req.Header.Get("tazzy-tenant"), req.Header.Get("tazzy-saml"))
 	t, err := template.ParseFiles("static/index.html")
-	infoLog.Printf("BasePage template error", err)
+	infoLog.Printf("BasePage template error: %v", err)
 	t.Execute(rw, application{
 		Job:   vars["job"],
 		Email: email,
@@ -62,19 +62,19 @@ func submit(rw http.ResponseWriter, req *http.Request) {
 func getEmail(tenant, saml string) string {
 	url := getURL(fmt.Sprintf("core/tenants/%s/saml/assertions/byKey/%s/json", tenant, saml))
 	jsonAttr, err := getHTTP(tenant, url)
-	infoLog.Printf("GetEmail json error", err)
+	infoLog.Printf("GetEmail json error: %v", err)
 	if err != nil {
 		return ""
 	}
 
 	var attr attributes
-	infoLog.Printf("GetEmail attr error", json.Unmarshal(jsonAttr, &attr))
+	infoLog.Printf("GetEmail attr error: %v", json.Unmarshal(jsonAttr, &attr))
 	return attr.Email
 }
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("tas/devs/allan/apply/{job}", basePage)
+	r.HandleFunc("/tas/devs/allan/apply/{job}", basePage)
 	r.HandleFunc("/submit", submit)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 	fatalLog.Fatal(http.ListenAndServe(":8080", r))
