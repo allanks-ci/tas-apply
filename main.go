@@ -72,9 +72,14 @@ func getEmail(tenant, saml string) string {
 	return attr.Email
 }
 
+func getApplyUrl(rw http.ResponseWriter, req *http.Request) {
+	rw.Write(fmt.Sprintf("http://%v.quickapply.communitytazzy.com"))
+}
+
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/tas/devs/allan/apply/{job}", basePage)
+	r.HandleFunc("/tas/devs/allan/apply", getApplyUrl)
+	r.HandleFunc("/apply/{job}", basePage)
 	r.HandleFunc("/submit", submit)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 	fatalLog.Fatal(http.ListenAndServe(":8080", r))
