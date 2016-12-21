@@ -27,7 +27,7 @@ publish:
       - echo "Removing tas-apply"
       - docker rm tas-apply
       - echo "Starting tas-apply"
-      - docker run -d -e "IO_TAZZY_SECRET=$$TAZZY_SECRET" -e "APP_SHORTCODE=quickapply" -v /db/bolt/tas-apply:/db --name tas-apply -p 8085:8080 allanks/tas-apply
+      - docker run -d -e "IO_TAZZY_URL=http://quickapply.tazzy.io" -e "IO_TAZZY_SECRET=$$TAZZY_SECRET" -e "APP_SHORTCODE=quickapply" --name tas-apply -p 8085:8080 allanks/tas-apply
     when:
       branch: master
       event: push

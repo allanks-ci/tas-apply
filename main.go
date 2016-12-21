@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -13,7 +14,7 @@ import (
 )
 
 type application struct {
-	Job       int    `json:"job"`
+	Job       string `json:"job"`
 	Email     string `json:"email"`
 	FirstName string `json:"firstname"`
 	LastName  string `json:"lastname"`
@@ -27,13 +28,35 @@ var fatalLog = log.New(os.Stdout, "FATAL: ", log.LstdFlags)
 var infoLog = log.New(os.Stdout, "INFO: ", log.LstdFlags)
 
 func basePage(rw http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
 	email := getEmail(req.Header.Get("tazzy-tenant"), req.Header.Get("tazzy-saml"))
 	t, err := template.ParseFiles("static/index.html")
 	infoLog.Printf("BasePage template error", err)
-	t.Execute(rw, email)
+	t.Execute(rw, application{
+		Job:   vars["job"],
+		Email: email,
+	})
 }
 
 func submit(rw http.ResponseWriter, req *http.Request) {
+	err := req.ParseForm()
+	if err != nil {
+		return
+	}
+	app := application{
+		Job:       req.FormValue("Job"),
+		Email:     req.FormValue("Email"),
+		FirstName: req.FormValue("FirstName"),
+		LastName:  req.FormValue("LastName"),
+	}
+	data, err := json.Marshal(&app)
+	if err != nil {
+		infoLog.Printf("Submit json error: %v", err)
+		http.Error(rw, "Could not serialize input", http.StatusInternalServerError)
+		return
+	}
+	postHTTP(req.Header.Get("tazzy-tenant"), getURL("devs/allan/submit"), data)
+	http.Redirect(rw, req, getURL("devs/allan/board"), 301)
 }
 
 func getEmail(tenant, saml string) string {
@@ -51,10 +74,16 @@ func getEmail(tenant, saml string) string {
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/apply/{job}", basePage)
+	r.HandleFunc("tas/devs/allan/apply/{job}", basePage)
 	r.HandleFunc("/submit", submit)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 	fatalLog.Fatal(http.ListenAndServe(":8080", r))
+}
+
+func postHTTP(tenant, url string, data []byte) ([]byte, error) {
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	return doHTTP(req, tenant)
 }
 
 func getHTTP(tenant, url string) ([]byte, error) {
@@ -65,7 +94,7 @@ func getHTTP(tenant, url string) ([]byte, error) {
 
 func doHTTP(req *http.Request, tenant string) ([]byte, error) {
 	req.Header.Set("tazzy-secret", os.Getenv("IO_TAZZY_SECRET"))
-	req.Header.Set("tazzy-tenant", os.Getenv("APP_SHORTCODE"))
+	req.Header.Set("tazzy-tenant", tenant)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
